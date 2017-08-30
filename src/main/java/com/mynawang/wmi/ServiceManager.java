@@ -127,8 +127,8 @@ public class ServiceManager {
         args = new String[4];
         args[0] = "127.0.0.1";
         args[1] = "127.0.0.1";
-        args[2] = "home";
-        args[3] = "123";
+        args[2] = "mynawang";
+        args[3] = "123456";
         JISystem.getLogger().setLevel(Level.ALL);
         JISystem.setInBuiltLogHandler(false);
         JISystem.setAutoRegisteration(true);
