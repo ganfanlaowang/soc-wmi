@@ -154,9 +154,6 @@ public class EventLogListener {
                 )[0];
                 IJIDispatch wbemEvent = toIDispatch(eventAsVariant);
 
-                System.out.println("~~~~~~~~~~~~~~~~~~~~~" + JSON.toJSONString(wbemEvent));
-
-
                 // WMI gives us events as SWbemObject instances (a base class of any WMI object). We know in our case we asked for a specific object
                 // type, so we will go ahead and invoke methods supported by that Win32_NTLogEvent class via the wbemEvent IDispatch pointer.
                 // In this case, we simply call the "GetObjectText_" method that returns us the entire object as a CIM formatted string. We could,
@@ -172,10 +169,18 @@ public class EventLogListener {
 
                 newTask.sendMsg(asText);
                 logger.info("==================" + asText);
+
+                JIVariant jiVariant = wbemEvent.get("TargetInstance");
+                IJIDispatch ijiDispatch = toIDispatch(jiVariant);
+
+                System.out.println("###########################################################" +
+                        "\n" + wmiEventLogAnalysisEngine(ijiDispatch));
+
             }
         }
         catch ( Exception e )
         {
+            System.out.println("222222222222222222222222222222222222");
             e.printStackTrace();
         }
         finally
@@ -184,6 +189,9 @@ public class EventLogListener {
             {
                 try
                 {
+
+                    System.out.println("1111111111111111111111111111111111111");
+
                     JISession.destroySession(dcomSession);
                 }
                 catch ( Exception ex )
@@ -193,4 +201,131 @@ public class EventLogListener {
             }
         }
     }
+
+
+    private static String wmiEventLogAnalysisEngine(IJIDispatch ijiDispatch) {
+
+        String resurnLog = "";
+
+        System.out.println("*****************************************************************************");
+
+
+        StringBuffer returnLog = new StringBuffer("0|");
+
+        try {
+
+            String eventLogType = ijiDispatch.get("Logfile").getObjectAsString2().toString();
+            String detectTime = ijiDispatch.get("TimeWritten").getObjectAsString2().toString();
+            String eventSource = ijiDispatch.get("SourceName").getObjectAsString2().toString();
+            String eventId = String.valueOf(ijiDispatch.get("EventCode").getObjectAsInt());
+            String eventType = ijiDispatch.get("Type").getObjectAsString2().toString();
+            String eventCategory = ijiDispatch.get("EventType").getObjectAsUnsigned().getValue().toString();
+            String user = "0";
+            if (ijiDispatch.get("User").getType() == 8) {
+                user =  ijiDispatch.get("User").getObjectAsString2().toString();
+            } else {
+                user =  String.valueOf(ijiDispatch.get("User").getObjectAsInt());
+            }
+            String computerName = ijiDispatch.get("ComputerName").getObjectAsString2().toString();
+            String discription = "";
+            if (ijiDispatch.get("Message").getType() == 1) {
+                discription = String.valueOf(ijiDispatch.get("Message").getObjectAsInt());
+            } else {
+                discription = ijiDispatch.get("Message").getObjectAsString2().toString();
+            }
+
+            returnLog.append("EventlogType=").append(eventLogType).append("|");
+            returnLog.append("DetectTime=").append(detectTime).append("|");
+            returnLog.append("EventSource=").append(eventSource).append("|");
+            returnLog.append("EventID=").append(eventId).append("|");
+            returnLog.append("EventType=").append(eventType).append("|");
+            returnLog.append("EventCategory=").append(eventCategory).append("|");
+
+            returnLog.append("User=");
+            if (!"0".equals(user)) {
+                returnLog.append(user);
+            }
+            returnLog.append("|");
+            returnLog.append("ComputerName=").append(computerName).append("|");
+            returnLog.append("Discription=");
+            if (!"".equals(discription)) {
+                returnLog.append(discription);
+            }
+
+
+            System.out.println("Category = " + ijiDispatch.get("Category").getObjectAsInt());
+            if (ijiDispatch.get("CategoryString").getType() == 8) {
+                System.out.println("CategoryString = " + ijiDispatch.get("CategoryString").getObjectAsString2());
+            } else {
+                System.out.println("CategoryString = " + ijiDispatch.get("CategoryString").getObjectAsInt());
+            }
+
+            System.out.println("ComputerName = " + ijiDispatch.get("ComputerName").getObjectAsString2());
+
+            if (ijiDispatch.get("Data").getType() == 1) {
+                System.out.println("Data = " + ijiDispatch.get("Data").getObjectAsInt());
+            } else {
+                JIVariant[] array = (JIVariant[]) ijiDispatch.get("Data").getObjectAsArray().getArrayInstance();
+                String dataStr = strJoin(array, ", ");
+                System.out.println("Data = " + dataStr);
+            }
+
+            System.out.println("EventCode = " + ijiDispatch.get("EventCode").getObjectAsInt());
+            System.out.println("EventIdentifier = " + ijiDispatch.get("EventIdentifier").getObjectAsInt());
+            System.out.println("EventType = " + ijiDispatch.get("EventType").getObjectAsUnsigned().getValue());
+
+            System.out.println("Logfile = " + ijiDispatch.get("Logfile").getObjectAsString2());
+
+            if (ijiDispatch.get("Message").getType() == 1) {
+                System.out.println("Message = " + ijiDispatch.get("Message").getObjectAsInt());
+            } else {
+                System.out.println("Message = " + ijiDispatch.get("Message").getObjectAsString2());
+            }
+
+            JIVariant[] array1 = (JIVariant[]) ijiDispatch.get("InsertionStrings")
+                    .getObjectAsArray().getArrayInstance();
+            String insertionStr = strJoin(array1, ", ");
+            System.out.println("InsertionStrings = " + insertionStr);
+
+            System.out.println("RecordNumber = " + ijiDispatch.get("RecordNumber").getObjectAsInt());
+            System.out.println("SourceName = " + ijiDispatch.get("SourceName").getObjectAsString2());
+            System.out.println("TimeGenerated = " + ijiDispatch.get("TimeGenerated").getObjectAsString2());
+            System.out.println("TimeWritten = " + ijiDispatch.get("TimeWritten").getObjectAsString2());
+            System.out.println("Type = " + ijiDispatch.get("Type").getObjectAsString2());
+            if (ijiDispatch.get("User").getType() == 8) {
+                System.out.println("User = " + ijiDispatch.get("User").getObjectAsString2());
+            } else {
+                System.out.println("User = " + ijiDispatch.get("User").getObjectAsInt());
+            }
+
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("*****************************************************************************");
+
+        return returnLog.toString();
+    }
+
+
+    private static String strJoin(JIVariant[] aArr, String sSep)
+            throws JIException {
+        StringBuilder sbStr = new StringBuilder();
+        for (int i = 0, il = aArr.length; i < il; i++) {
+            if (i > 0)
+                sbStr.append(sSep);
+            if (aArr[i].getType() == 8) {
+                sbStr.append(aArr[i].getObjectAsString2());
+            } else {
+                sbStr.append(aArr[i].getObjectAsUnsigned().getValue());
+            }
+        }
+        return sbStr.toString();
+    }
+
+
+
 }
